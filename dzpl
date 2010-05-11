@@ -1,0 +1,21 @@
+#!/usr/bin/env perl
+use Dzpl
+    name => 'App-GitHub-updatedescription',
+    version => '0.0010',
+    author => 'Robert Krimen <robertkrimen@gmail.com>',
+    license => 'Perl5',
+    copyright => 'Robert Krimen',
+
+    require => q/
+        Getopt::Long
+        IPC::Open3
+        LWP::UserAgent
+
+        [Test]
+        Test::Most
+    /;
+;
+
+{ plugin '@ROKR::Basic' }
+
+run;
