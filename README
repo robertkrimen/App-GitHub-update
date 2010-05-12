@@ -1,9 +1,26 @@
 NAME
-    App::GitHub::updatedescription - Update a github repository description
+    App::GitHub::update - Update a github repository (description, etc.)
     from the command-line
 
 VERSION
     version 0.0010
+
+SYNOPSIS
+        # Update the description of github:alice/example
+        github-update --login alice --token 42fe60... --repository example --description "Xyzzy"
+
+        # Pulling login and token from $HOME/.github
+        github-update --repository example --description "Xyzzy"
+
+DESCRIPTION
+    A simple tool for setting the description and homepage of a github
+    repository
+
+GitHub identity format ($HOME/.github or $HOME/.github-identity)
+        login <login>
+        token <token>
+
+    Optionally GnuPG encrypted
 
 AUTHOR
       Robert Krimen <robertkrimen@gmail.com>

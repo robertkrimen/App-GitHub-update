@@ -1,10 +1,30 @@
-package App::GitHub::updatedescription;
-# ABSTRACT: Update a github repository description from the command-line
+package App::GitHub::update;
+# ABSTRACT: Update a github repository (description, etc.) from the command-line
+
+=head1 SYNOPSIS
+
+    # Update the description of github:alice/example
+    github-update --login alice --token 42fe60... --repository example --description "Xyzzy"
+
+    # Pulling login and token from $HOME/.github
+    github-update --repository example --description "Xyzzy"
+
+=head1 DESCRIPTION
+
+A simple tool for setting the description and homepage of a github repository
+
+=head1 GitHub identity format ($HOME/.github or $HOME/.github-identity)
+
+    login <login>
+    token <token>
+
+Optionally GnuPG encrypted
+
+=cut
 
 use strict;
 use warnings;
 
-use Carp;
 use Config::Identity::GitHub;
 use LWP::UserAgent;
 use Getopt::Long qw/ GetOptions /;
@@ -13,11 +33,10 @@ my $agent = LWP::UserAgent->new;
 sub update {
     my $self = shift;
     my %given = @_;
-    my ( $login, $token, $repository, $description );
+    my ( $login, $token, $repository, $description, $homepage );
 
-    ( $repository, $description ) = @given{qw/ repository description /};
-    defined $_ && length $_ or croak "Missing repository" for $repository;
-    defined $_ && length $_ or croak "Missing description" for $description;
+    ( $repository, $description, $homepage ) = @given{qw/ repository description homepage /};
+    defined $_ && length $_ or die "Missing repository\n" for $repository;
 
     ( $login, $token ) = @given{qw/ login token /};
     unless( defined $token && length $token ) {
@@ -25,9 +44,13 @@ sub update {
         ( $login, $token ) = @identity{qw/ login token /};
     }
 
+    my @arguments;
+    push @arguments, 'values[description]' => $description if defined $description;
+    push @arguments, 'values[homepage]' => $homepage if defined $homepage;
+
     my $uri = "https://github.com/api/v2/json/repos/show/$login/$repository";
     my $response = $agent->post( $uri,
-        [ login => $login, token => $token, 'values[description]' => $description ] );
+        [ login => $login, token => $token, @arguments ] );
 
     unless ( $response->is_success ) {
         carp $response->status_line;
@@ -42,9 +65,9 @@ sub usage (;$) {
     do { chomp $error; warn $error, "\n" } if $error;
     warn <<_END_;
 
-Usage: github-updatedescription [opt] <description>
+Usage: github-update [opt] <description>
 
-    --login ...      Your github login
+    --login ...         Your github login
 
     --token ...         The github token associated with the given login
 
@@ -68,7 +91,7 @@ sub guess_dzpl {
 
     eval {
         # Oh god this is hacky
-        package App::GitHub::updatedescription::_garbage;
+        package App::GitHub::update::Sandbox;
         local @ARGV;
         do './dzpl';
         my $dzpl = $Dzpl::dzpl;
@@ -87,7 +110,8 @@ sub run {
     my $self = shift;
     my @arguments = @_;
 
-    my ( $login, $token, $repository, $description, $dzpl, $help );
+    my ( $login, $token, $repository, $dzpl, $help );
+    my ( $homepage, $description );
     {
         local @ARGV = @arguments;
         GetOptions(
@@ -96,8 +120,10 @@ sub run {
             'token=s' => \$token,
             'repository=s' => \$repository,
             'dzpl' => \$dzpl,
+
+            'description=s' => \$description,
+            'homepage=s' => \$homepage,
         );
-        $description = join ' ', @ARGV;
     }
 
     if ($help) {
@@ -110,16 +136,20 @@ sub run {
         $repository ||= $guess{repository};
         $description ||= $guess{description};
     }
+    
+    eval {
+        my $response = $self->update(
+            login => $login, token => $token, repository => $repository,
+            description => $description, homepage => $homepage,
+        );
 
-    usage <<_END_ unless $description;
-$0: You need to specify a description
+        print $response->as_string, "\n";
+    };
+    if ($@) {
+        usage <<_END_;
+github-update: $@
 _END_
-
-    my $response = $self->update(
-        login => $login, token => $token,
-        repository => $repository, description => $description );
-
-    print $response->as_string, "\n";
+    }
 }
 
 1;

@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 use Dzpl
-    name => 'App-GitHub-updatedescription',
+    name => 'App-GitHub-update',
     version => '0.0010',
     author => 'Robert Krimen <robertkrimen@gmail.com>',
     license => 'Perl5',
