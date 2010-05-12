@@ -7,8 +7,8 @@ use Dzpl
     copyright => 'Robert Krimen',
 
     require => q/
+        Config::Identity
         Getopt::Long
-        IPC::Open3
         LWP::UserAgent
 
         [Test]

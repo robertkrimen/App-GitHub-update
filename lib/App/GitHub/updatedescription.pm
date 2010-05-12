@@ -5,7 +5,7 @@ use strict;
 use warnings;
 
 use Carp;
-use App::GitHub::updatedescription::GitHubCfg;
+use Config::Identity::GitHub;
 use LWP::UserAgent;
 use Getopt::Long qw/ GetOptions /;
 my $agent = LWP::UserAgent->new;
@@ -13,21 +13,21 @@ my $agent = LWP::UserAgent->new;
 sub update {
     my $self = shift;
     my %given = @_;
-    my ( $username, $token, $repository, $description );
+    my ( $login, $token, $repository, $description );
 
     ( $repository, $description ) = @given{qw/ repository description /};
     defined $_ && length $_ or croak "Missing repository" for $repository;
     defined $_ && length $_ or croak "Missing description" for $description;
 
-    ( $username, $token ) = @given{qw/ username token /};
+    ( $login, $token ) = @given{qw/ login token /};
     unless( defined $token && length $token ) {
-        my %cfg = App::GitHub::updatedescription::GitHubCfg->slurp;
-        ( $username, $token ) = @cfg{qw/ username token /};
+        my %identity = Config::Identity::GitHub->load;
+        ( $login, $token ) = @identity{qw/ login token /};
     }
 
-    my $uri = "https://github.com/api/v2/json/repos/show/$username/$repository";
+    my $uri = "https://github.com/api/v2/json/repos/show/$login/$repository";
     my $response = $agent->post( $uri,
-        [ login => $username, token => $token, 'values[description]' => $description ] );
+        [ login => $login, token => $token, 'values[description]' => $description ] );
 
     unless ( $response->is_success ) {
         carp $response->status_line;
@@ -44,9 +44,9 @@ sub usage (;$) {
 
 Usage: github-updatedescription [opt] <description>
 
-    --username ...      Your github username
+    --login ...      Your github login
 
-    --token ...         The github token associated with the given username
+    --token ...         The github token associated with the given login
 
     --repository ...    The repository to update
 
@@ -72,6 +72,7 @@ sub guess_dzpl {
         local @ARGV;
         do './dzpl';
         my $dzpl = $Dzpl::dzpl;
+        $dzpl = $Dzpl::dzpl;
         $dzpl->zilla->_setup_default_plugins;
         $_->gather_files for ( @{ $dzpl->zilla->plugins_with(-FileGatherer) } );
         $guess{repository} = $dzpl->zilla->name;
@@ -86,12 +87,12 @@ sub run {
     my $self = shift;
     my @arguments = @_;
 
-    my ( $username, $token, $repository, $description, $dzpl, $help );
+    my ( $login, $token, $repository, $description, $dzpl, $help );
     {
         local @ARGV = @arguments;
         GetOptions(
             'help|h|?' => \$help,
-            'username=s' => \$username,
+            'login=s' => \$login,
             'token=s' => \$token,
             'repository=s' => \$repository,
             'dzpl' => \$dzpl,
@@ -115,7 +116,7 @@ $0: You need to specify a description
 _END_
 
     my $response = $self->update(
-        username => $username, token => $token,
+        login => $login, token => $token,
         repository => $repository, description => $description );
 
     print $response->as_string, "\n";
