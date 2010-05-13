@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 use Dzpl
     name => 'App-GitHub-update',
-    version => '0.0010',
+    version => '0.0011',
     author => 'Robert Krimen <robertkrimen@gmail.com>',
     license => 'Perl5',
     copyright => 'Robert Krimen',
@@ -16,6 +16,6 @@ use Dzpl
     /;
 ;
 
-{ plugin '@ROKR::Basic' }
+{ plugin '@ROKR' }
 
 run;
