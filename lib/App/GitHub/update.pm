@@ -117,12 +117,8 @@ sub guess_dzpl {
     my %guess;
 
     eval {
-        # Oh god this is hacky
-        package App::GitHub::update::Sandbox;
-        local @ARGV;
-        do './dzpl';
-        my $dzpl = $Dzpl::dzpl;
-        $dzpl = $Dzpl::dzpl;
+        require Dist::Dzpl;
+        my $dzpl = Dist::Dzpl->from_file( './' );
         $dzpl->zilla->_setup_default_plugins;
         $_->gather_files for ( @{ $dzpl->zilla->plugins_with(-FileGatherer) } );
         $guess{repository} = $dzpl->zilla->name;
